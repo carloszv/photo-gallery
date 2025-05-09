@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 
 interface SearchBoxProps {
   searchQuery: string;
@@ -11,14 +11,28 @@ const SearchBox: React.FC<SearchBoxProps> = ({
   setSearchQuery,
   isLoading = false,
 }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Restore focus when loading state changes from true to false
+  useEffect(() => {
+    if (!isLoading && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isLoading]);
+
   const handleClear = () => {
     setSearchQuery('');
+    // Ensure focus is maintained after clearing
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
   };
 
   return (
     <div className='search-box'>
       <div className='search-input-wrapper'>
         <input
+          ref={inputRef}
           id='photo-search'
           type='text'
           placeholder='Search photos...'
