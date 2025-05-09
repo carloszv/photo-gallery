@@ -30,7 +30,7 @@ const PhotoGrid: React.FC<PhotoGridProps> = ({ photos, loading, error }) => {
       {photos.map(photo => (
         <div key={photo.id} className='photo-card'>
           <div className='photo-image'>
-            <img src='public/no-image.jpeg' alt={photo.title} loading='lazy' />
+            <img src='no-image.jpeg' alt={photo.title} loading='lazy' />
           </div>
           <div className='photo-info'>
             <h3 className='photo-title'>{photo.title}</h3>
