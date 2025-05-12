@@ -22,13 +22,18 @@ export const usePhotoSearch = (): UsePhotoSearchResult => {
   const [pageSize, setPageSize] = useState<number>(10);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [totalCount, setTotalCount] = useState<number>(0);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>('');
 
-  // Update setSearchQuery to reset page when search changes
-  const handleSearchQueryChange = (query: string) => {
-    setSearchQuery(query);
-    // Reset to first page when search query changes
-    setCurrentPage(1);
-  };
+  // Debounce search query to avoid too many API calls
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+      // Reset to first page when search query changes
+      setCurrentPage(1);
+    }, 500);
+
+    return () => clearTimeout(timerId);
+  }, [searchQuery]);
 
   // Memoized fetch function to avoid recreating on every render
   const fetchPhotos = useCallback(async () => {
@@ -40,9 +45,9 @@ export const usePhotoSearch = (): UsePhotoSearchResult => {
       // Build the API URL
       let url = `https://jsonplaceholder.typicode.com/photos?_start=${start}&_limit=${pageSize}`;
       // Add search query parameter if present
-      if (searchQuery) {
-        url += `&title_like=${encodeURIComponent(searchQuery)}`;
-      }  
+      if (debouncedSearchQuery) {
+        url += `&title_like=${encodeURIComponent(debouncedSearchQuery)}`;
+      }
       // Fetch photos with pagination and optional search
       const response = await fetch(url);
       if (!response.ok) {
@@ -52,8 +57,8 @@ export const usePhotoSearch = (): UsePhotoSearchResult => {
       // Get total count from headers or make a separate count request
       // JsonPlaceholder doesn't provide total count in headers, so we need a separate request
       let countUrl = 'https://jsonplaceholder.typicode.com/photos';
-      if (searchQuery) {
-        countUrl += `?title_like=${encodeURIComponent(searchQuery)}`;
+      if (debouncedSearchQuery) {
+        countUrl += `?title_like=${encodeURIComponent(debouncedSearchQuery)}`;
       }
       const countResponse = await fetch(countUrl);
       if (!countResponse.ok) {
@@ -69,7 +74,7 @@ export const usePhotoSearch = (): UsePhotoSearchResult => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize, searchQuery]);
+  }, [currentPage, pageSize, debouncedSearchQuery]);
 
   // Fetch photos whenever relevant parameters change
   useEffect(() => {
@@ -86,6 +91,6 @@ export const usePhotoSearch = (): UsePhotoSearchResult => {
     pageSize,
     setPageSize,
     searchQuery,
-    setSearchQuery: handleSearchQueryChange, // Replace with our wrapped function
+    setSearchQuery,
   };
 };
